@@ -7,10 +7,11 @@ Created on Sat Nov 12 21:15:42 2022
 """
 
 # %% Define paths
-path = '/Users/tgarutti/Documents/Python/ING_CaseStudy/'
+import os
+path = os.path.abspath(os.getcwd())
 
-input_path = path+'01_Input/'
-output_path = path+'02_Output/'
+input_path = path+'/01_Input/'
+output_path = path+'/02_Output/'
 
 # %% Input file name and worksheet names
 
