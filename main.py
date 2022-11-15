@@ -25,7 +25,7 @@ aDF, delinquencyDiff, aDF_firstDiff, delinquencyLog, aDF_log, za_results = \
 
 iidx = historical.index.intersection(delinquencyLog.index)
 endog = delinquencyLog.loc[iidx].sort_index(ascending = False)
-exog = historical.loc[iidx].sort_index(ascending = False)
+exog = historical.loc[iidx].sort_index(ascending = False)[scenarios.columns]
     
 train_endog, test_endog = importData.trainTestData(endog, 12)
 train_exog, test_exog = importData.trainTestData(exog, 12)
