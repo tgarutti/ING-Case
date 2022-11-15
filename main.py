@@ -15,16 +15,20 @@ data_raw, data_dict = importData.readData()
 importData.plotAllData(data_dict)
 
 delinquency = data_dict['delinquency']
-historical = data_dict['historical']
-scenarios = data_dict['scenarios']
+historical = data_dict['historical'].drop(['date_from'],axis=1)
+scenarios = data_dict['scenarios'].drop(['date_from'],axis=1)
 
 
 
 aDF, delinquencyDiff, aDF_firstDiff, delinquencyLog, aDF_log, za_results = \
     statTests.testNonStationarity(delinquency, diff=4)
 
+iidx = historical.index.intersection(delinquencyLog.index)
+endog = delinquencyLog.loc[iidx].sort_index(ascending = False)
+exog = historical.loc[iidx].sort_index(ascending = False)
+    
+train_endog, test_endog = importData.trainTestData(endog, 12)
+train_exog, test_exog = importData.trainTestData(exog, 12)
 
-    
-train_y, test_y = importData.trainTestData(delinquencyLog, 12)
-    
-# %% 
+
+# %% Train models
