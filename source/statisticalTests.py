@@ -39,7 +39,7 @@ def testNonStationarity(data, diff, covariates):
     grangerCausality(data, covariates, maxlags=4)
 
     
-    return aDF, firstDiff, aDF_firstDiff, dataLog, aDF_log, za_results
+    return aDF, firstDiff, aDF_firstDiff, dataLog, aDF_log
 
 
 # %% Non-Stationarity Tests

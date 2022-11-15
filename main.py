@@ -20,7 +20,7 @@ scenarios = data_dict['scenarios'].drop(['date_from'],axis=1)
 
 
 
-aDF, delinquencyDiff, aDF_firstDiff, delinquencyLog, aDF_log, za_results = \
+aDF, delinquencyDiff, aDF_firstDiff, delinquencyLog, aDF_log = \
     statTests.testNonStationarity(delinquency, diff=4)
 
 iidx = historical.index.intersection(delinquencyLog.index)
