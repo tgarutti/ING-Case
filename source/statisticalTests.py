@@ -8,21 +8,19 @@ Created on Sun Nov 13 18:22:25 2022
 # %% Packages
 import pandas as pd
 import numpy as np
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-from statsmodels.tsa.stattools import adfuller
-from statsmodels.tsa.stattools import zivot_andrews
 import matplotlib.pyplot as plt
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.stattools import adfuller, zivot_andrews, grangercausalitytests
 from statsmodels.tsa.seasonal import seasonal_decompose
 import statsmodels.api as sm
 
 # %% Testing Non-Stationaritys
-
-def testNonStationarity(data, diff):
+def testNonStationarity(data, diff, covariates):
     # 1) Augmented Dickey-Fuller test
     aDF = augmentedDickeyFuller(data)
     
-    plotACF_PCAF(data)
-    dec = decompose(data,'additive')
+    #plotACF_PCAF(data)
+    #dec = decompose(data,'additive')
     
     # 2) Take first difference and perform aDF test
     dataDiff = data.diff(periods=-diff).iloc[:-diff]
@@ -30,17 +28,18 @@ def testNonStationarity(data, diff):
     aDF_firstDiff = augmentedDickeyFuller(firstDiff)
         
     # 3) Plot ACF and PCAF of first difference
-    plotACF_PCAF(firstDiff)
-    dec = decompose(firstDiff,'additive')
+    #plotACF_PCAF(firstDiff)
+    #dec = decompose(firstDiff,'additive')
     
     dataLog = np.log(data).diff(periods=-1).iloc[:-1]
     aDF_log = augmentedDickeyFuller(dataLog)
-    plotACF_PCAF(dataLog)
-    za_results = zivotAndrews(dataLog)
+    #plotACF_PCAF(dataLog)
+    #za_results = zivotAndrews(dataLog)
+
+    grangerCausality(data, covariates, maxlags=4)
 
     
     return aDF, firstDiff, aDF_firstDiff, dataLog, aDF_log, za_results
-
 
 
 # %% Non-Stationarity Tests
@@ -58,8 +57,9 @@ def augmentedDickeyFuller(data):
         
     return aDF
 
+
 def zivotAndrews(data, regression='c'):
-    colnames = data.columns if type(data) == pd.DataFrame else data.columns
+    colnames = data.columns if type(data) == pd.DataFrame else data.names
     
     za_results = pd.DataFrame()
     for col in colnames:
@@ -72,8 +72,28 @@ def zivotAndrews(data, regression='c'):
         
     return za_results
 
+
+def grangerCausality(data, covariates, maxlags = 4):
+    colnames = data.columns if type(data) == pd.DataFrame else data.names
+    covnames = covariates.columns if type(covariates) == pd.DataFrame else covariates.names
+    
+    granger_results = {}
+    granger = pd.DataFrame()
+    for col in colnames:
+        data_col = data[col]
+        for cov in covnames:
+            data_cov = covariates[cov]
+            result = grangercausalitytests([data_col, data_cov], maxlag = maxlags)
+            granger_temp = pd.DataFrame([result[0], result[1]], 
+                            index = ['ADF Statistics', 'p-value'],
+                            columns = [col])
+            granger = pd.concat([granger,granger_temp],axis=1)
+        granger_results[col] = granger
+    return granger_results
+
+
 def plotACF_PCAF(data):
-    colnames = data.columns if type(data) == pd.DataFrame else data.columns
+    colnames = data.columns if type(data) == pd.DataFrame else data.names
     
     for col in colnames:
         data_col = data[col]
