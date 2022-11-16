@@ -12,7 +12,8 @@ import source.statisticalTests as statTests
 import numpy as np
 import pandas as pd
 from datetime import datetime
-import source.varModel as arModels
+import source.varModel as varM
+import source.varmsModel as varmsM
 
 # %% Read and process raw data
 data_raw, data_dict = importData.readData()
@@ -30,18 +31,25 @@ endog, exog, iidx = importData.matchIdx(endog, exog, lag=1)
 #aDF, granger_results = statTests.testNonStationarity(endogQoQ, covariates=exogQoQ)
 
 # %% Fit vector autoregressive (VAR) model and check out of sample performance
-train_endog, test_endog = importData.trainTestData(endog, 12)
-train_exog, test_exog = importData.trainTestData(exog, 12)
+varData = varM.trainTestData(endog, exog, 12)
+
 
 results = {}
 
 empty = pd.DataFrame()
-results['VAR (1)'] = arModels.varModel(train_endog, 1, 0, empty, test_endog, empty)
+results['VAR (1)'] = varM.varModel(varData, 1, 0, X = 0)
 
-results['VARX (1)'] = arModels.varModel(train_endog, 1, 0, train_exog, test_endog, test_exog)
+results['VARX (1)'] = varM.varModel(varData, 1, 0, X = 1)
 
 # importData.plotDF(forecasts, 'Delinquency (QoQ) Forecasts')
 # importData.plotDF(test_endog, 'Delinquency (QoQ)')
 
 
 # %% Fit the VAR Markov Switching model and check out of sample performance
+
+varMSData = varmsM.trainTestData(endog, exog, 1, 12)
+
+empty = pd.DataFrame()
+#results['VARMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 0)
+
+results['VARXMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 1)

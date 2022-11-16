@@ -97,12 +97,7 @@ def matchIdx(endog, exog, lag=1):
     exog.index = idx_exog
     iidx = idx_endog.intersection(idx_exog)
     return endog.loc[iidx], exog.loc[iidx], iidx
-
-def trainTestData(data, n_test):
-    data_sorted = data.sort_index(ascending = True)
-    data_test = data[-n_test:]
-    data_train = data[:-n_test]
-    return data_train, data_test        
+       
         
 # %% Plot data
 def plotAllData(data):

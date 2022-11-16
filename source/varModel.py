@@ -9,9 +9,20 @@ Created on Tue Nov 15 20:44:35 2022
 # %% Import packages
 import statsmodels.api as sm
 import numpy as np
+import pandas as pd
 
 # %% Vector autoregressive model
-def varModel(train_endog, ar, ma, train_exog, test_endog, test_exog):
+def varModel(varData, ar, ma, X):
+    train_endog = varData['train_endog']
+    test_endog = varData['test_endog'] 
+    
+    if X==0:
+        train_exog = test_exog = pd.DataFrame()
+    else:
+        train_exog = varData['train_exog']
+        test_exog = varData['test_exog']
+        
+    
     n_forecasts = len(test_endog)
     startDate = test_endog.index[0]
     mod, modelFit = varModelFit(train_endog, ar, ma, train_exog)
@@ -34,9 +45,9 @@ def varModelFit(endog, ar, ma, exog):
         mod = sm.tsa.VARMAX(endog, order=(ar,ma), trend='n')
     else:
         mod = sm.tsa.VARMAX(endog, order=(ar,ma), trend='n', exog=exog)
-    modelfit = mod.fit(maxiter=1000, disp=False)
+    modelFit = mod.fit(maxiter=1000, disp=False)
     
-    return mod, modelfit
+    return mod, modelFit
 
 def varModelForecast(modelFit, n_forecasts, exog, startDate):
     if exog.empty:
@@ -44,3 +55,16 @@ def varModelForecast(modelFit, n_forecasts, exog, startDate):
     else:
         forecast = modelFit.simulate(nsimulations=n_forecasts, exog=exog, anchor = startDate)
     return forecast
+
+# %% Process data for VAR model
+def trainTestData(endog, exog, n_test):
+    data = {}
+    
+    endog_sorted = endog.sort_index(ascending = True)
+    data["test_endog"] = endog_sorted[-n_test:]
+    data["train_endog"] = endog_sorted[:-n_test]
+    
+    exog_sorted = exog.sort_index(ascending = True)
+    data["test_exog"] = exog_sorted[-n_test:]
+    data["train_exog"] = exog_sorted[:-n_test]
+    return data
