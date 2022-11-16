@@ -77,6 +77,32 @@ def readData():
         
     return data_raw, data
         
+# %% Process data functions
+def transformData(data, transformation):
+    data = data.sort_index(ascending = True)
+    if transformation == 'log_diff1':
+        data = np.log(data).diff(periods=1).iloc[1:]
+    if transformation == 'diff1':
+        data = data.diff(periods=1).iloc[1:]
+    if transformation == 'diff4':
+        data = data.diff(periods=4).iloc[4:]
+    if transformation == 'diff1_diff4':
+        data = data.diff(periods=1).iloc[1:]
+        data = data.diff(periods=4).iloc[4:]
+    return data
+
+def matchIdx(endog, exog, lag=1):
+    idx_endog = endog.index
+    idx_exog = exog.index.shift(lag, freq='Q')
+    exog.index = idx_exog
+    iidx = idx_endog.intersection(idx_exog)
+    return endog.loc[iidx], exog.loc[iidx], iidx
+
+def trainTestData(data, n_test):
+    data_sorted = data.sort_index(ascending = True)
+    data_test = data[-n_test:]
+    data_train = data[:-n_test]
+    return data_train, data_test        
         
 # %% Plot data
 def plotAllData(data):
@@ -114,10 +140,17 @@ def plotScenarioData(sub_data):
     for i in range(5):
         axs[i].plot(sub_data[col_names[i+1]])
         axs[i].title.set_text(col_names[i+1])
-    
-# %% Helper functions
-def trainTestData(data, n_test):
-    data_sorted = data.sort_index(ascending = True)
-    data_test = data[:n_test]
-    data_train = data[n_test:]
-    return data_train, data_test
+        
+def plotDF_subplots(df):
+    col_names = df.columns
+    fig, axs = plt.subplots(len(col_names), figsize=(30,20))
+    for i in range(len(col_names)):
+        axs[i].plot(df[col_names[i]])
+        axs[i].title.set_text(col_names[i])
+        
+def plotDF(df, str_title):
+    col_names = df.columns
+    plt.figure()
+    plt.plot(df)
+    plt.legend(col_names)  
+    plt.title(str_title)

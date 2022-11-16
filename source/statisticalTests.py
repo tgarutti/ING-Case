@@ -15,31 +15,17 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 import statsmodels.api as sm
 
 # %% Testing Non-Stationaritys
-def testNonStationarity(data, diff, covariates):
+def testNonStationarity(data, covariates):
     # 1) Augmented Dickey-Fuller test
     aDF = augmentedDickeyFuller(data)
+    #za_results = zivotAndrews(data)
     
     #plotACF_PCAF(data)
     #dec = decompose(data,'additive')
-    
-    # 2) Take first difference and perform aDF test
-    dataDiff = data.diff(periods=-diff).iloc[:-diff]
-    firstDiff = dataDiff.diff(periods=-1).iloc[:-1]
-    aDF_firstDiff = augmentedDickeyFuller(firstDiff)
         
-    # 3) Plot ACF and PCAF of first difference
-    #plotACF_PCAF(firstDiff)
-    #dec = decompose(firstDiff,'additive')
-    
-    dataLog = np.log(data).diff(periods=-1).iloc[:-1]
-    aDF_log = augmentedDickeyFuller(dataLog)
-    #plotACF_PCAF(dataLog)
-    #za_results = zivotAndrews(dataLog)
+    granger_results = grangerCausality(data, covariates, maxlags=4)
 
-    grangerCausality(data, covariates, maxlags=4)
-
-    
-    return aDF, firstDiff, aDF_firstDiff, dataLog, aDF_log
+    return aDF, granger_results
 
 
 # %% Non-Stationarity Tests
@@ -64,7 +50,7 @@ def zivotAndrews(data, regression='c'):
     za_results = pd.DataFrame()
     for col in colnames:
         data_col = data[col]
-        result = zivot_andrews(data_col,regression = regression)
+        result = zivot_andrews(data_col,regression = regression, trim=0.01)
         za_temp = pd.DataFrame([result[0], result[1]], 
                            index = ['ZA Statistics', 'p-value'],
                            columns = [col])
@@ -78,17 +64,22 @@ def grangerCausality(data, covariates, maxlags = 4):
     covnames = covariates.columns if type(covariates) == pd.DataFrame else covariates.names
     
     granger_results = {}
-    granger = pd.DataFrame()
     for col in colnames:
         data_col = data[col]
         for cov in covnames:
+            print('Endogenous: ' + col)
+            print('Exogenous: ' + cov)
+            print('- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -')
             data_cov = covariates[cov]
-            result = grangercausalitytests([data_col, data_cov], maxlag = maxlags)
-            granger_temp = pd.DataFrame([result[0], result[1]], 
-                            index = ['ADF Statistics', 'p-value'],
-                            columns = [col])
-            granger = pd.concat([granger,granger_temp],axis=1)
-        granger_results[col] = granger
+            try:
+                granger = grangercausalitytests(pd.concat([data_col.reset_index(drop=True), data_cov.reset_index(drop=True)],axis=1), maxlag = maxlags)
+                granger_pvalue = [granger[i][0]['ssr_ftest'][1] for i in range(1,maxlags)]
+                granger_results[col + ' & ' + cov] = granger_pvalue
+            except ValueError:
+                print('ERROR: Granger Causality test failed.')
+                pass
+            print('--------------------------------------------------------------------------')
+            
     return granger_results
 
 
