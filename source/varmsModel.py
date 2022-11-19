@@ -22,6 +22,9 @@ def varMSModel(varMSData, ar, ma, X):
         train_exog = varMSData['train_exog']
         test_exog = varMSData['test_exog']
         
+    full_endog = pd.concat([train_endog, test_endog])
+    full_endog[-len(test_endog):] = 0
+        
     n_forecasts = len(test_endog)
     startDate = test_endog.index[0]
     endDate = test_endog.index[-1]
@@ -32,7 +35,7 @@ def varMSModel(varMSData, ar, ma, X):
         endog = train_endog[col]
         exog = train_exog
         mod, modelFit = varMSModelFit(endog, ar, ma, exog)
-        forecasts[col] = varMSModelForecast(modelFit, n_forecasts, test_exog, startDate)
+        forecasts[col] = varMSModelForecast(modelFit, 2, 2, exog, full_endog)
         residuals[col] = modelFit.resid
         
     # mod, modelFit = varMSModelFit(train_endog, ar, ma, train_exog)
@@ -63,12 +66,14 @@ def varMSModelFit(endog, ar, ma, exog):
     
     return mod, modelFit
 
-def varMSModelForecast(modelFit, exog, startDate, k_regimes):
+def varMSModelForecast(modelFit, ar, k_regimes, exog, endog):
     p0 = modelFit.smoothed_marginal_probabilities[0][-1]
     p1 = modelFit.smoothed_marginal_probabilities[1][-1]
     
     params = processParams(modelFit.params, k_regimes)
     
+    for idx, row in exog.iterrows:
+        
     
     
     return 
