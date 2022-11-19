@@ -24,22 +24,16 @@ def varMSModel(varMSData, ar, ma, X):
         
     n_forecasts = len(test_endog)
     startDate = test_endog.index[0]
+    endDate = test_endog.index[-1]
     forecasts = test_endog
     residuals = test_endog
     
     for col in train_endog.columns:
         endog = train_endog[col]
         exog = train_exog
-        if X == 1:
-            col_exog = []
-            for i in range(ar):
-                lag=i+1
-                col_exog = col_exog + [col+"_Lag("+str(lag)+")"]
-            col_exog = col_exog+train_exog.columns[5:].to_list()
-            exog = train_exog[col_exog]
         mod, modelFit = varMSModelFit(endog, ar, ma, exog)
-        forecasts[col] = varMSModelForecast(modelFit, n_forecasts, test_exog[col_exog], startDate)
-        #residuals[col] = modelFit.resid
+        forecasts[col] = varMSModelForecast(modelFit, n_forecasts, test_exog, startDate)
+        residuals[col] = modelFit.resid
         
     # mod, modelFit = varMSModelFit(train_endog, ar, ma, train_exog)
     # forecasts = varMSModelForecast(modelFit, n_forecasts, test_exog, startDate)
@@ -60,45 +54,60 @@ def varMSModelFit(endog, ar, ma, exog):
     if exog.empty:
         mod = sm.tsa.MarkovAutoregression(endog, order=ar, k_regimes=2, 
               trend='c', switching_variance=True)
-
     else:
-        mod = sm.tsa.MarkovRegression(endog, k_regimes=2, 
-              trend='c', exog=exog, switching_variance=True)
+        mod = sm.tsa.MarkovAutoregression(endog, order=ar, k_regimes=2, 
+              trend='n', exog=exog, switching_variance=True,
+              switching_exog=True)
+    
     modelFit = mod.fit(maxiter=1000, disp=False)
     
     return mod, modelFit
 
-def varMSModelForecast(modelFit, n_forecasts, exog, startDate):
-    forecast = modelFit.predict(exog = exog)
+def varMSModelForecast(modelFit, exog, startDate, k_regimes):
+    p0 = modelFit.smoothed_marginal_probabilities[0][-1]
+    p1 = modelFit.smoothed_marginal_probabilities[1][-1]
     
-    # if exog.empty:
-    #     forecast = modelFit.simulate(nsimulations=n_forecasts, anchor = startDate)
-    # else:
-    #     forecast = modelFit.simulate(nsimulations=n_forecasts, exog=exog, anchor = startDate)
-    return forecast
+    params = processParams(modelFit.params, k_regimes)
+    
+    
+    
+    return 
 
 
 # %% Process data for VAR MS model
 def trainTestData(endog, exog, ar, n_test):
-    for i in range(ar):
-        lag = i+1
-        endog_ar = endog[:-(lag)]
-        idx = endog_ar.index.shift(lag, freq='Q')
-        endog_ar.index = idx
-        cols = endog.columns
-        cols = [col + "_Lag("+str(lag)+")" for col in cols]
-        endog_ar.columns = cols
-        exog_ar = pd.concat([endog_ar, exog.loc[idx]], axis=1)
-        
-    endog = endog.loc[idx]
-    
     data = {}
     
     endog_sorted = endog.sort_index(ascending = True)
     data["test_endog"] = endog_sorted[-n_test:]
     data["train_endog"] = endog_sorted[:-n_test]
     
-    exog_sorted = exog_ar.sort_index(ascending = True)
+    exog_sorted = exog.sort_index(ascending = True)
     data["test_exog"] = exog_sorted[-n_test:]
     data["train_exog"] = exog_sorted[:-n_test]
     return data
+
+# %% Helper functions
+def processParams(input_mat, k_regimes):
+    params = {}
+    
+    p00 = input_mat[0]
+    p10 = input_mat[1]
+    params['Transition Probabilities'] = np.array([[p00, 1-p00],[p10, 1-p10]])
+    
+    input_params = input_mat[k_regimes:]
+    for i in range(k_regimes):
+        str_regime = "["+str(i)+"]"
+        name_regime = "Regime "+str(i)
+        reg_params = input_params[[True if x > 0 else False for x in input_params.index.str.find(str_regime)]]
+        reg_params.index = [x[:-3] for x in reg_params.index]
+        sigma_param = reg_params[reg_params.index.str.contains('sigma')]
+        ar_params = reg_params[reg_params.index.str.contains('ar')]
+        exog_params = reg_params[:-(len(sigma_param) + len(ar_params))]
+        params_reg = {}
+        params_reg["Exog Params"] = exog_params
+        params_reg["AR Params"] = ar_params
+        params_reg["Sigma Params"] = sigma_param
+        params[name_regime] = params_reg
+        
+    return params

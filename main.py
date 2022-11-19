@@ -52,4 +52,4 @@ varMSData = varmsM.trainTestData(endog, exog, 1, 12)
 empty = pd.DataFrame()
 #results['VARMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 0)
 
-results['VARXMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 1)
+results['VARXMS (1)'] = varmsM.varMSModel(varMSData, 2, 0, X = 1)
