@@ -72,9 +72,13 @@ def varMSModelForecast(modelFit, ar, k_regimes, exog, endog):
     
     params = processParams(modelFit.params, k_regimes)
     
-    for idx, row in exog.iterrows:
+    for idx, row in exog.iterrows():
+        p0, p1 = calcProbabilities(p0, p1, params["Transition Probabilities"])
         
-    
+        for k in range(k_regimes):
+            
+        
+        
     
     return 
 
@@ -106,13 +110,16 @@ def processParams(input_mat, k_regimes):
         name_regime = "Regime "+str(i)
         reg_params = input_params[[True if x > 0 else False for x in input_params.index.str.find(str_regime)]]
         reg_params.index = [x[:-3] for x in reg_params.index]
-        sigma_param = reg_params[reg_params.index.str.contains('sigma')]
+        if reg_params.index.str.contains('sigma').any():
+            sigma_param = reg_params[reg_params.index.str.contains('sigma')]
+        else:
+            sigma_param = input_params[input_params.index.str.contains('sigma')]
         ar_params = reg_params[reg_params.index.str.contains('ar')]
         exog_params = reg_params[:-(len(sigma_param) + len(ar_params))]
         params_reg = {}
         params_reg["Exog Params"] = exog_params
         params_reg["AR Params"] = ar_params
-        params_reg["Sigma Params"] = sigma_param
+        params_reg["Sigma"] = sigma_param
         params[name_regime] = params_reg
         
     return params
@@ -129,3 +136,16 @@ def calcProbabilities(p0, p1, trans_prob):
 
     pi1 = 1 - pi0
     return pi0, pi1
+
+def forecastRegime(params_reg, exog, endog):
+    exog_params = params_reg["Exog Params"]
+    ar_params = params_reg["Exog Params"]
+    sigma = params_reg["Sigma"]
+    
+    f_exog = exog_params*exog
+    f_ar = ar_params*endog
+    e = np.random.normal(0, sigma, 1)
+    
+    forecast = sum(f_exog) + sum(f_ar) + e
+    
+    return forecast
