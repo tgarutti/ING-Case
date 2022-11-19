@@ -111,3 +111,16 @@ def processParams(input_mat, k_regimes):
         params[name_regime] = params_reg
         
     return params
+
+
+def calcProbabilities(p0, p1, trans_prob):
+
+    # P[s(t+1) = 0 | s(t) = 0]
+    p00 = trans_prob[0][0]
+    # P[s(t+1) = 0 | s(t) = 1]
+    p10 = trans_prob[1][0]
+    
+    pi0 = p00 * p0 + p10 * p1
+
+    pi1 = 1 - pi0
+    return pi0, pi1
