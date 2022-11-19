@@ -91,6 +91,26 @@ def transformData(data, transformation):
         data = data.diff(periods=4).iloc[4:]
     return data
 
+
+def reverseTransformedData(orig_data, forecasted_data, transformation):
+    data = pd.concat([orig_data, forecasted_data])
+
+    for i in range(len(orig_data), len(data)):
+        if transformation == 'log_diff1':
+            data[i] = data[i] + data[i-1]
+            data[i] = np.exp(data[i])
+        if transformation == 'diff1':
+            data[i] = data[i] + data[i-1]
+        if transformation == 'diff4':
+            data[i] = data[i] + data[i-4]
+        if transformation == 'diff1_diff4':
+            data[i] = data[i] + data[i-4]
+            data[i] = data[i] + data[i-1]
+
+    orig_forecasted_data = data[-len(forecasted_data):]
+    return orig_forecasted_data
+
+
 def matchIdx(endog, exog, lag=1):
     idx_endog = endog.index
     idx_exog = exog.index.shift(lag, freq='Q')
