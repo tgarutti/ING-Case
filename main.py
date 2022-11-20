@@ -16,6 +16,7 @@ import source.varModel as varM
 import source.varmsModel as varmsM
 
 # %% Read and process raw data
+
 data_raw, data_dict = importData.readData()
 #importData.plotAllData(data_dict)
 
@@ -23,15 +24,16 @@ delinquency = data_dict['delinquency']
 historical = data_dict['historical'].drop(['date_from'],axis=1)
 scenarios = data_dict['scenarios'].drop(['date_from'],axis=1)
 
-endog = importData.transformData(delinquency, 'diff4_diff1')
-exog = importData.transformData(historical[historical.columns[5:]], 'diff1')
+endog = importData.transformData(delinquency, 'diff4')
+exog = importData.transformData(historical[scenarios.columns], 'sort')
 exog.columns = historical.columns[5:]
 
 endog, exog, iidx = importData.matchIdx(endog, exog, lag=1)
 
-#aDF, granger_results = statTests.testNonStationarity(endogQoQ, covariates=exogQoQ)
+aDF, granger_results = statTests.testNonStationarity(endog, covariates=exog)
 
 # %% Fit vector autoregressive (VAR) model and check out of sample performance
+
 varData = varM.trainTestData(endog, exog, 12)
 
 
@@ -55,7 +57,7 @@ varMSData = varmsM.trainTestData(endog, exog, 1, 12)
 varmsHP = {}
 varmsHP['trend'] = 'n'
 varmsHP['var'] = True
-varmsHP['ar'] = True
+varmsHP['ar'] = False
 varmsHP['exog'] = True
 varmsHP['trend_switch'] = False
 
@@ -66,6 +68,7 @@ empty = pd.DataFrame()
 results['ARXMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 1, hyperparams= varmsHP)
 
 # %% Create MSE matrix
+
 MSE = pd.DataFrame()
 colnames = []
 for key in results.keys():
@@ -77,3 +80,9 @@ MSE = MSE.T
 # Divide by benchmark
 MSE_comparison = MSE/MSE.loc['ARX (1)']
 MSE_weighted = MSE/abs(varMSData['test_endog'].mean(axis=0))
+
+# %% Reverse transformation
+endog_train = endog[:-12]
+for key in results.keys():
+    forecastsQoQ = results[key]['forecastsQoQ']
+    results[key]['forecasts'] = importData.reverseTransformedData(endog_train, forecastsQoQ, "diff4")

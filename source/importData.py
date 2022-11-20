@@ -100,18 +100,18 @@ def reverseTransformedData(orig_data, forecasted_data, transformation):
 
     for i in range(len(orig_data), len(data)):
         if transformation == 'log_diff1':
-            data[i] = data[i] + data[i-1]
-            data[i] = np.exp(data[i])
+            data.iloc[i] = data.iloc[i] + data.iloc[i-1]
+            data.iloc[i] = np.exp(data.iloc[i])
         if transformation == 'diff1':
-            data[i] = data[i] + data[i-1]
+            data.iloc[i] = data.iloc[i] + data.iloc[i-1]
         if transformation == 'diff4':
-            data[i] = data[i] + data[i-4]
+            data.iloc[i] = data.iloc[i] + data.iloc[i-4]
         if transformation == 'diff1_diff4':
-            data[i] = data[i] + data[i-4]
-            data[i] = data[i] + data[i-1]
+            data.iloc[i] = data.iloc[i] + data.iloc[i-4]
+            data.iloc[i] = data.iloc[i] + data.iloc[i-1]
         if transformation == 'diff4_diff1':
-            data[i] = data[i] + data[i-1]
-            data[i] = data[i] + data[i-4]
+            data.iloc[i] = data.iloc[i] + data.iloc[i-1]
+            data.iloc[i] = data.iloc[i] + data.iloc[i-4]
 
     orig_forecasted_data = data[-len(forecasted_data):]
     return orig_forecasted_data

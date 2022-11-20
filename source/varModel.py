@@ -47,7 +47,7 @@ def varModel(varData, ar, ma, mv, X):
     MSE = np.power(estimationErrors, 2).mean(axis=0)
     
     results={}
-    results['forecasts'] = forecasts
+    results['forecastsQoQ'] = forecasts
     results['estimationErrors'] = estimationErrors
     results['residuals'] = residuals
     results['MSE'] = MSE
