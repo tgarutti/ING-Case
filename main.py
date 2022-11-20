@@ -25,64 +25,64 @@ delinquency = data_dict['delinquency']
 historical = data_dict['historical'].drop(['date_from'],axis=1)
 scenarios = data_dict['scenarios'].drop(['date_from'],axis=1)
 
-plots.plotDelinquencyRates(delinquency)
-
 endog = importData.transformData(delinquency, 'diff4')
-plots.plotQoQDelinquencyRates(endog)
-
-
 exog = importData.transformData(historical[historical.columns[5:]], 'diff1')
 exog.columns = historical.columns[5:]
 
 endog, exog, iidx = importData.matchIdx(endog, exog, lag=1)
 
+# Plots
+# plots.plotDelinquencyRates(delinquency)
+# plots.plotQoQDelinquencyRates(endog)
 
 
-#aDF, granger_results = statTests.testNonStationarity(endogQoQ, covariates=exogQoQ)
+# Summary Statistics
 
-# # %% Fit vector autoregressive (VAR) model and check out of sample performance
-# varData = varM.trainTestData(endog, exog, 12)
+aDF, granger_results = statTests.testNonStationarity(endogQoQ, covariates=exogQoQ)
 
-
-# results = {}
-
-# empty = pd.DataFrame()
-# results['VAR (1)'] = varM.varModel(varData, 1, 0, 1, X = 0)
-# results['AR (1)'] = varM.varModel(varData, 1, 0, 0, X = 0)
-
-# results['VARX (1)'] = varM.varModel(varData, 1, 0, 1, X = 1)
-# results['ARX (1)'] = varM.varModel(varData, 1, 0, 0, X = 1)
-
-# # importData.plotDF(forecasts, 'Delinquency (QoQ) Forecasts')
-# # importData.plotDF(test_endog, 'Delinquency (QoQ)')
+# %% Fit vector autoregressive (VAR) model and check out of sample performance
+varData = varM.trainTestData(endog, exog, 12)
 
 
-# # %% Fit the VAR Markov Switching model and check out of sample performance
+results = {}
 
-# varMSData = varmsM.trainTestData(endog, exog, 1, 12)
+empty = pd.DataFrame()
+results['VAR (1)'] = varM.varModel(varData, 1, 0, 1, X = 0)
+results['AR (1)'] = varM.varModel(varData, 1, 0, 0, X = 0)
 
-# varmsHP = {}
-# varmsHP['trend'] = 'n'
-# varmsHP['var'] = True
-# varmsHP['ar'] = True
-# varmsHP['exog'] = True
-# varmsHP['trend_switch'] = False
+results['VARX (1)'] = varM.varModel(varData, 1, 0, 1, X = 1)
+results['ARX (1)'] = varM.varModel(varData, 1, 0, 0, X = 1)
+
+# importData.plotDF(forecasts, 'Delinquency (QoQ) Forecasts')
+# importData.plotDF(test_endog, 'Delinquency (QoQ)')
 
 
-# empty = pd.DataFrame()
-# #results['ARMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 0, hyperparams= varmsHP)
+# %% Fit the VAR Markov Switching model and check out of sample performance
 
-# results['ARXMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 1, hyperparams= varmsHP)
+varMSData = varmsM.trainTestData(endog, exog, 1, 12)
 
-# # %% Create MSE matrix
-# MSE = pd.DataFrame()
-# colnames = []
-# for key in results.keys():
-#     MSE = pd.concat([MSE,(results[key])['MSE']],axis=1)
-#     colnames.append(key)
-# MSE.columns = colnames
-# MSE = MSE.T
+varmsHP = {}
+varmsHP['trend'] = 'n'
+varmsHP['var'] = True
+varmsHP['ar'] = True
+varmsHP['exog'] = True
+varmsHP['trend_switch'] = False
 
-# # Divide by benchmark
-# MSE_comparison = MSE/MSE.loc['ARX (1)']
-# MSE_weighted = MSE/abs(varMSData['test_endog'].mean(axis=0))
+
+empty = pd.DataFrame()
+#results['ARMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 0, hyperparams= varmsHP)
+
+results['ARXMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 1, hyperparams= varmsHP)
+
+# %% Create MSE matrix
+MSE = pd.DataFrame()
+colnames = []
+for key in results.keys():
+    MSE = pd.concat([MSE,(results[key])['MSE']],axis=1)
+    colnames.append(key)
+MSE.columns = colnames
+MSE = MSE.T
+
+# Divide by benchmark
+MSE_comparison = MSE/MSE.loc['ARX (1)']
+MSE_weighted = MSE/abs(varMSData['test_endog'].mean(axis=0))

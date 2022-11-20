@@ -11,6 +11,7 @@ import statsmodels.api as sm
 import numpy as np
 import pandas as pd
 from copy import deepcopy
+import matplotlib.pyplot as plt
 
 # %% Vector autoregressive model
 def varMSModel(varMSData, ar, ma, X, hyperparams):
@@ -35,7 +36,10 @@ def varMSModel(varMSData, ar, ma, X, hyperparams):
         endog = train_endog[col]
         exog = train_exog
         mod, modelFit = varMSModelFit(endog, ar, ma, exog, hyperparams)
-        forecasts[col] = varMSModelForecast(modelFit, ar, 2, test_exog, full_endog[col])
+        smoothedP0 = modelFit.smoothed_marginal_probabilities[1]
+        plt.figure()
+        smoothedP0.plot()
+        forecasts[col] = varMSModelForecast(modelFit, ar, 2, test_exog, full_endog[col], hyperparams)
         residuals[col] = endog-modelFit.predict()
         
     # mod, modelFit = varMSModelFit(train_endog, ar, ma, train_exog)
@@ -46,7 +50,7 @@ def varMSModel(varMSData, ar, ma, X, hyperparams):
     MSE = np.power(estimationErrors, 2).mean(axis=0)
     
     results={}
-    results['forecasts'] = forecasts
+    results['forecastsQoQ'] = forecasts
     results['estimationErrors'] = estimationErrors
     results['residuals'] = residuals
     results['MSE'] = MSE
@@ -68,12 +72,12 @@ def varMSModelFit(endog, ar, ma, exog, hyperparams):
     
     return mod, modelFit
 
-def varMSModelForecast(modelFit, ar, k_regimes, exog, endog):
+def varMSModelForecast(modelFit, ar, k_regimes, exog, endog, hyperparams):
     n_forecasts = len(exog)
     p0 = modelFit.smoothed_marginal_probabilities[0][-1]
     p1 = modelFit.smoothed_marginal_probabilities[1][-1]
     
-    params = processParams(modelFit.params, k_regimes)
+    params = processParams(modelFit.params, k_regimes, hyperparams["trend"])
     i = 0
     for idx, row in exog.iterrows():
         p0, p1 = calcProbabilities(p0, p1, params["Transition Probabilities"])
@@ -104,7 +108,7 @@ def trainTestData(endog, exog, ar, n_test):
     return data
 
 # %% Helper functions
-def processParams(input_mat, k_regimes):
+def processParams(input_mat, k_regimes, trend):
     params = {}
     
     p00 = input_mat[0]
@@ -112,6 +116,16 @@ def processParams(input_mat, k_regimes):
     params['Transition Probabilities'] = np.array([[p00, 1-p00],[p10, 1-p10]])
     
     input_params = input_mat[k_regimes:]
+    
+    constant = input_params[input_params.index.str.contains('const')]
+    if constant.empty:
+        constant = 0
+    
+    t = 0
+    if 't' in trend:
+        t = input_params[input_params.index.str.contains('x1')]
+    
+    
     for i in range(k_regimes):
         str_regime = "["+str(i)+"]"
         name_regime = "Regime "+str(i)
@@ -128,13 +142,20 @@ def processParams(input_mat, k_regimes):
             ar_params = input_params[input_params.index.str.contains('ar')]
             
         exog_params = reg_params[reg_params.index.str.contains('QoQ')]
+        x_params = reg_params[reg_params.index.str.contains('x')]
         if exog_params.empty:
             exog_params = input_params[input_params.index.str.contains('QoQ')]
+            x_params = reg_params[reg_params.index.str.contains('x')]
+        
+        if exog_params.empty:
+            exog_params = x_params 
             
         params_reg = {}
         params_reg["Exog Params"] = exog_params 
         params_reg["AR Params"] = ar_params
         params_reg["Sigma"] = sigma_param
+        params_reg["Constant"] = constant
+        params_reg["Trend"] = t
         params[name_regime] = params_reg
         
     return params
@@ -154,15 +175,17 @@ def calcProbabilities(p0, p1, trans_prob):
 
 def forecastRegime(params_reg, exog, endog):
     exog_params = params_reg["Exog Params"]
+    exog_params.index = exog.index
     ar_params = params_reg["AR Params"]
     ar_params.index = endog.index
     sigma = params_reg["Sigma"]
+    
     
     
     f_exog = exog_params*exog
     f_ar = ar_params*endog
     e = np.random.normal(0, sigma, 1)
     
-    forecast = sum(f_exog) + sum(f_ar) + e
+    forecast = params_reg['Constant'] +  sum(f_exog) + sum(f_ar) + e
     
     return forecast
