@@ -93,4 +93,6 @@ endog_train = endog[:-12]
 for key in results.keys():
     forecastsQoQ = results[key]['forecastsQoQ']
     results[key]['forecasts'] = importData.reverseTransformedData(delinquency.loc[endog_train.index], forecastsQoQ, "diff4")
+    results[key]['FullSampleResults'] = pd.concat([delinquency.loc[endog_train.index], results[key]['forecasts']])
+    plots.plotForecasts(results[key]['FullSampleResults'], 12, key)
     

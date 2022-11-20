@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 # NBER recessions
 from pandas_datareader.data import DataReader
 from datetime import datetime
+from itertools import cycle, islice
+
 
 # %% Plot data
 def plotDelinquencyRates(delinquency):
@@ -27,6 +29,27 @@ def plotQoQDelinquencyRates(delinquency_QoQ):
     #plt.title('Delinquency Rates (NSA) from 1987 to 2022 for all commercial banks')
     plt.fill_between(usrec.index, -1, 1, where=usrec['USREC'].values, color='k', alpha=0.1)
     plt.ylim([-0.04,0.05])
+    
+    
+def plotForecasts(delinquency, n_forecasts, model_name):
+    plt.figure()
+    train_del = delinquency[:-n_forecasts]
+    forecasts = delinquency[-n_forecasts:]
+    my_colors = list(islice(cycle(['b','y','g','r','m']), None, len(train_del)))
+    plt.plot(train_del, linestyle= '-', color = my_colors)
+    plt.plot(forecasts, linestyle= '--', color = my_colors)
+
+    for i, col in enumerate(train_del.columns):
+        plt.plot(train_del[col], "-", colors[i])
+        plt.plot(forecasts[col], "--", colors[i])
+    
+    plt.ylabel('delinquency rate')
+    plt.legend(['All real estate', 'All customer', 'Leases', 'C&I', 'Agricultural'])
+    
+
+    #usrec = DataReader('USREC', 'fred', start=datetime(1987, 1, 1), end=datetime(2022, 4, 1))
+    #plt.fill_between(usrec.index, 0, 1, where=usrec['USREC'].values, color='k', alpha=0.1)
+    plt.ylim([0,0.12])
 
 
 def plotAllData(data):
