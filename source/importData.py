@@ -89,6 +89,9 @@ def transformData(data, transformation):
     if transformation == 'diff1_diff4':
         data = data.diff(periods=1).iloc[1:]
         data = data.diff(periods=4).iloc[4:]
+    if transformation == 'diff4_diff1':
+            data = data.diff(periods=4).iloc[4:]
+            data = data.diff(periods=1).iloc[1:]
     return data
 
 
@@ -106,6 +109,9 @@ def reverseTransformedData(orig_data, forecasted_data, transformation):
         if transformation == 'diff1_diff4':
             data[i] = data[i] + data[i-4]
             data[i] = data[i] + data[i-1]
+        if transformation == 'diff4_diff1':
+            data[i] = data[i] + data[i-1]
+            data[i] = data[i] + data[i-4]
 
     orig_forecasted_data = data[-len(forecasted_data):]
     return orig_forecasted_data

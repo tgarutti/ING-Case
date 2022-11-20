@@ -8,11 +8,13 @@ Created on Tue Nov 15 20:44:35 2022
 
 # %% Import packages
 import statsmodels.api as sm
+from statsmodels.tsa.ar_model import AutoReg
 import numpy as np
 import pandas as pd
+from copy import deepcopy
 
 # %% Vector autoregressive model
-def varModel(varData, ar, ma, X):
+def varModel(varData, ar, ma, mv, X):
     train_endog = varData['train_endog']
     test_endog = varData['test_endog'] 
     
@@ -22,12 +24,24 @@ def varModel(varData, ar, ma, X):
         train_exog = varData['train_exog']
         test_exog = varData['test_exog']
         
-    
     n_forecasts = len(test_endog)
-    startDate = test_endog.index[0]
-    mod, modelFit = varModelFit(train_endog, ar, ma, train_exog)
-    forecasts = varModelForecast(modelFit, n_forecasts, test_exog, startDate)
-    residuals = modelFit.resid
+    startDate = test_endog.index[0]    
+    if mv == 1:
+        mod, modelFit = varModelFit(train_endog, ar, ma, train_exog)
+        forecasts = varModelForecast(modelFit, n_forecasts, test_exog, startDate, mv)
+        residuals = modelFit.resid
+    else:
+        forecasts = deepcopy(test_endog)
+        residuals = deepcopy(train_endog)
+        forecasts[:] = 0
+        residuals[:] = 0
+        
+        for col in train_endog.columns:
+            endog = train_endog[col]
+            exog = train_exog
+            mod, modelFit = varModelFit(endog, ar, ma, exog)
+            forecasts[col] = varModelForecast(modelFit, n_forecasts, test_exog, startDate, mv)
+            residuals[col] = modelFit.resid
     
     estimationErrors = test_endog-forecasts
     MSE = np.power(estimationErrors, 2).mean(axis=0)
@@ -41,19 +55,33 @@ def varModel(varData, ar, ma, X):
     return results
 
 def varModelFit(endog, ar, ma, exog):
-    if exog.empty:
-        mod = sm.tsa.VARMAX(endog, order=(ar,ma), trend='n')
+    if type(endog) == pd.DataFrame:
+        if exog.empty:
+            mod = sm.tsa.VARMAX(endog, order=(ar,ma), trend='n')
+        else:
+            mod = sm.tsa.VARMAX(endog, order=(ar,ma), trend='n', exog=exog)
+        modelFit = mod.fit(maxiter=1000, disp=False)
     else:
-        mod = sm.tsa.VARMAX(endog, order=(ar,ma), trend='n', exog=exog)
-    modelFit = mod.fit(maxiter=1000, disp=False)
+        if exog.empty:
+            mod = AutoReg(endog, ar, old_names=False)
+        else:
+            mod = AutoReg(endog, ar, old_names=False, exog=exog)
+        modelFit = mod.fit()
+            
     
     return mod, modelFit
 
-def varModelForecast(modelFit, n_forecasts, exog, startDate):
-    if exog.empty:
-        forecast = modelFit.simulate(nsimulations=n_forecasts, anchor = startDate)
+def varModelForecast(modelFit, n_forecasts, exog, startDate, mv):
+    if mv == 1:
+        if exog.empty:
+            forecast = modelFit.simulate(nsimulations=n_forecasts, anchor = startDate)
+        else:
+            forecast = modelFit.simulate(nsimulations=n_forecasts, exog=exog, anchor = startDate)
     else:
-        forecast = modelFit.simulate(nsimulations=n_forecasts, exog=exog, anchor = startDate)
+        if exog.empty:
+            forecast = modelFit.forecast(steps=n_forecasts)
+        else:
+            forecast = modelFit.forecast(steps=n_forecasts, exog=exog)    
     return forecast
 
 # %% Process data for VAR model

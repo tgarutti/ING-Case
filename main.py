@@ -23,8 +23,9 @@ delinquency = data_dict['delinquency']
 historical = data_dict['historical'].drop(['date_from'],axis=1)
 scenarios = data_dict['scenarios'].drop(['date_from'],axis=1)
 
-endog = importData.transformData(delinquency, 'diff4')
-exog = importData.transformData(historical[historical.columns[5:]], 'sort')
+endog = importData.transformData(delinquency, 'diff4_diff1')
+exog = importData.transformData(historical[historical.columns[5:]], 'diff1')
+exog.columns = historical.columns[5:]
 
 endog, exog, iidx = importData.matchIdx(endog, exog, lag=1)
 
@@ -37,9 +38,11 @@ varData = varM.trainTestData(endog, exog, 12)
 results = {}
 
 empty = pd.DataFrame()
-results['VAR (1)'] = varM.varModel(varData, 1, 0, X = 0)
+results['VAR (1)'] = varM.varModel(varData, 1, 0, 1, X = 0)
+results['AR (1)'] = varM.varModel(varData, 1, 0, 0, X = 0)
 
-results['VARX (1)'] = varM.varModel(varData, 1, 0, X = 1)
+results['VARX (1)'] = varM.varModel(varData, 1, 0, 1, X = 1)
+results['ARX (1)'] = varM.varModel(varData, 1, 0, 0, X = 1)
 
 # importData.plotDF(forecasts, 'Delinquency (QoQ) Forecasts')
 # importData.plotDF(test_endog, 'Delinquency (QoQ)')
@@ -49,7 +52,28 @@ results['VARX (1)'] = varM.varModel(varData, 1, 0, X = 1)
 
 varMSData = varmsM.trainTestData(endog, exog, 1, 12)
 
-empty = pd.DataFrame()
-#results['VARMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 0)
+varmsHP = {}
+varmsHP['trend'] = 'n'
+varmsHP['var'] = True
+varmsHP['ar'] = True
+varmsHP['exog'] = True
+varmsHP['trend_switch'] = False
 
-results['VARXMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 1)
+
+empty = pd.DataFrame()
+#results['ARMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 0, hyperparams= varmsHP)
+
+results['ARXMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 1, hyperparams= varmsHP)
+
+# %% Create MSE matrix
+MSE = pd.DataFrame()
+colnames = []
+for key in results.keys():
+    MSE = pd.concat([MSE,(results[key])['MSE']],axis=1)
+    colnames.append(key)
+MSE.columns = colnames
+MSE = MSE.T
+
+# Divide by benchmark
+MSE_comparison = MSE/MSE.loc['ARX (1)']
+MSE_weighted = MSE/abs(varMSData['test_endog'].mean(axis=0))

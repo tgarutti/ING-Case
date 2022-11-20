@@ -13,7 +13,7 @@ import pandas as pd
 from copy import deepcopy
 
 # %% Vector autoregressive model
-def varMSModel(varMSData, ar, ma, X):
+def varMSModel(varMSData, ar, ma, X, hyperparams):
     train_endog = varMSData['train_endog']
     test_endog = varMSData['test_endog'] 
     
@@ -34,7 +34,7 @@ def varMSModel(varMSData, ar, ma, X):
     for col in train_endog.columns:
         endog = train_endog[col]
         exog = train_exog
-        mod, modelFit = varMSModelFit(endog, ar, ma, exog)
+        mod, modelFit = varMSModelFit(endog, ar, ma, exog, hyperparams)
         forecasts[col] = varMSModelForecast(modelFit, ar, 2, test_exog, full_endog[col])
         residuals[col] = endog-modelFit.predict()
         
@@ -53,14 +53,16 @@ def varMSModel(varMSData, ar, ma, X):
     
     return results
 
-def varMSModelFit(endog, ar, ma, exog):
+def varMSModelFit(endog, ar, ma, exog, hyperparams):
     if exog.empty:
         mod = sm.tsa.MarkovAutoregression(endog, order=ar, k_regimes=2, 
-              trend='c', switching_variance=True)
+              trend=hyperparams['trend'], switching_variance=hyperparams['var'], 
+              switching_ar=hyperparams['ar'], switching_trend=hyperparams['trend_switch'])
     else:
         mod = sm.tsa.MarkovAutoregression(endog, order=ar, k_regimes=2, 
-              trend='n', exog=exog, switching_variance=True,
-              switching_exog=True)
+              trend=hyperparams['trend'], exog=exog, switching_variance=hyperparams['var'], 
+              switching_ar=hyperparams['ar'], switching_trend=hyperparams['trend_switch'],
+              switching_exog=hyperparams['exog'])
     
     modelFit = mod.fit(maxiter=1000, disp=False)
     
@@ -115,14 +117,22 @@ def processParams(input_mat, k_regimes):
         name_regime = "Regime "+str(i)
         reg_params = input_params[[True if x > 0 else False for x in input_params.index.str.find(str_regime)]]
         reg_params.index = [x[:-3] for x in reg_params.index]
+        
         if reg_params.index.str.contains('sigma').any():
             sigma_param = reg_params[reg_params.index.str.contains('sigma')]
         else:
             sigma_param = input_params[input_params.index.str.contains('sigma')]
+            
         ar_params = reg_params[reg_params.index.str.contains('ar')]
-        exog_params = reg_params[:-(len(sigma_param) + len(ar_params))]
+        if ar_params.empty:
+            ar_params = input_params[input_params.index.str.contains('ar')]
+            
+        exog_params = reg_params[reg_params.index.str.contains('QoQ')]
+        if exog_params.empty:
+            exog_params = input_params[input_params.index.str.contains('QoQ')]
+            
         params_reg = {}
-        params_reg["Exog Params"] = exog_params
+        params_reg["Exog Params"] = exog_params 
         params_reg["AR Params"] = ar_params
         params_reg["Sigma"] = sigma_param
         params[name_regime] = params_reg
