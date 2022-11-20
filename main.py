@@ -15,7 +15,7 @@ import source.importData as importData
 import source.statisticalTests as statTests
 import source.varModel as varM
 import source.varmsModel as varmsM
-#import source.plots as plots
+import source.plots as plots
 
 # %% Read and process raw data
 data_raw, data_dict = importData.readData()
@@ -93,3 +93,4 @@ endog_train = endog[:-12]
 for key in results.keys():
     forecastsQoQ = results[key]['forecastsQoQ']
     results[key]['forecasts'] = importData.reverseTransformedData(delinquency.loc[endog_train.index], forecastsQoQ, "diff4")
+    
