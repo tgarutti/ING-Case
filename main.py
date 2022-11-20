@@ -15,7 +15,7 @@ import source.importData as importData
 import source.statisticalTests as statTests
 import source.varModel as varM
 import source.varmsModel as varmsM
-import source.plots as plots
+#import source.plots as plots
 
 # %% Read and process raw data
 data_raw, data_dict = importData.readData()
@@ -26,7 +26,7 @@ historical = data_dict['historical'].drop(['date_from'],axis=1)
 scenarios = data_dict['scenarios'].drop(['date_from'],axis=1)
 
 endog = importData.transformData(delinquency, 'diff4')
-exog = importData.transformData(historical[historical.columns[5:]], 'diff1')
+exog = importData.transformData(historical[scenarios.columns], 'sort')
 exog.columns = historical.columns[5:]
 
 endog, exog, iidx = importData.matchIdx(endog, exog, lag=1)
