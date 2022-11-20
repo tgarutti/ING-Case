@@ -21,7 +21,7 @@ import source.varmsModel as varmsM
 data_raw, data_dict = importData.readData()
 #plots.plotAllData(data_dict)
 
-delinquency = data_dict['delinquency'].sort_index(ascending = True)
+delinquency = data_dict['delinquency']
 historical = data_dict['historical'].drop(['date_from'],axis=1)
 scenarios = data_dict['scenarios'].drop(['date_from'],axis=1)
 
@@ -64,7 +64,7 @@ varMSData = varmsM.trainTestData(endog, exog, 1, 12)
 varmsHP = {}
 varmsHP['trend'] = 'n'
 varmsHP['var'] = True
-varmsHP['ar'] = True
+varmsHP['ar'] = False
 varmsHP['exog'] = True
 varmsHP['trend_switch'] = False
 
