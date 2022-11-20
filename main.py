@@ -92,4 +92,4 @@ MSE_weighted = MSE/abs(varMSData['test_endog'].mean(axis=0))
 endog_train = endog[:-12]
 for key in results.keys():
     forecastsQoQ = results[key]['forecastsQoQ']
-    results[key]['forecasts'] = importData.reverseTransformedData(endog_train, forecastsQoQ, "diff4")
+    results[key]['forecasts'] = importData.reverseTransformedData(delinquency.loc[endog_train.index], forecastsQoQ, "diff4")
