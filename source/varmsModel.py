@@ -10,6 +10,7 @@ Created on Wed Nov 16 18:06:02 2022
 import statsmodels.api as sm
 import numpy as np
 import pandas as pd
+from copy import deepcopy
 
 # %% Vector autoregressive model
 def varMSModel(varMSData, ar, ma, X):
@@ -24,19 +25,18 @@ def varMSModel(varMSData, ar, ma, X):
         
     full_endog = pd.concat([train_endog, test_endog])
     full_endog[-len(test_endog):] = 0
-        
-    n_forecasts = len(test_endog)
-    startDate = test_endog.index[0]
-    endDate = test_endog.index[-1]
-    forecasts = test_endog
-    residuals = test_endog
+    
+    forecasts = deepcopy(test_endog)
+    residuals = deepcopy(train_endog)
+    forecasts[:] = 0
+    residuals[:] = 0
     
     for col in train_endog.columns:
         endog = train_endog[col]
         exog = train_exog
         mod, modelFit = varMSModelFit(endog, ar, ma, exog)
-        forecasts[col] = varMSModelForecast(modelFit, 2, 2, exog, full_endog)
-        residuals[col] = modelFit.resid
+        forecasts[col] = varMSModelForecast(modelFit, ar, 2, test_exog, full_endog[col])
+        residuals[col] = endog-modelFit.predict()
         
     # mod, modelFit = varMSModelFit(train_endog, ar, ma, train_exog)
     # forecasts = varMSModelForecast(modelFit, n_forecasts, test_exog, startDate)
@@ -67,20 +67,25 @@ def varMSModelFit(endog, ar, ma, exog):
     return mod, modelFit
 
 def varMSModelForecast(modelFit, ar, k_regimes, exog, endog):
+    n_forecasts = len(exog)
     p0 = modelFit.smoothed_marginal_probabilities[0][-1]
     p1 = modelFit.smoothed_marginal_probabilities[1][-1]
     
     params = processParams(modelFit.params, k_regimes)
-    
+    i = 0
     for idx, row in exog.iterrows():
         p0, p1 = calcProbabilities(p0, p1, params["Transition Probabilities"])
         
+        forecasted_regimes = []
         for k in range(k_regimes):
-            
-        
-        
+            str_reg = "Regime "+str(k)
+            ar_vec = endog[(-(n_forecasts+ar)+i):(-n_forecasts+i)]
+            f_regime = forecastRegime(params[str_reg], row, ar_vec)
+            forecasted_regimes.append(f_regime)
+        forecast = p0*forecasted_regimes[0] + p1*forecasted_regimes[1]
+        endog[idx] = forecast
     
-    return 
+    return endog[-n_forecasts:]
 
 
 # %% Process data for VAR MS model
@@ -139,8 +144,10 @@ def calcProbabilities(p0, p1, trans_prob):
 
 def forecastRegime(params_reg, exog, endog):
     exog_params = params_reg["Exog Params"]
-    ar_params = params_reg["Exog Params"]
+    ar_params = params_reg["AR Params"]
+    ar_params.index = endog.index
     sigma = params_reg["Sigma"]
+    
     
     f_exog = exog_params*exog
     f_ar = ar_params*endog
