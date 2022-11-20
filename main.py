@@ -20,7 +20,7 @@ import source.varmsModel as varmsM
 data_raw, data_dict = importData.readData()
 #importData.plotAllData(data_dict)
 
-delinquency = data_dict['delinquency']
+delinquency = data_dict['delinquency'].sort_index(ascending = True)
 historical = data_dict['historical'].drop(['date_from'],axis=1)
 scenarios = data_dict['scenarios'].drop(['date_from'],axis=1)
 
