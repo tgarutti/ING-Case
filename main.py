@@ -38,7 +38,7 @@ endog, exog, iidx = importData.matchIdx(endog, exog, lag=1)
 
 # Summary Statistics
 
-aDF, granger_results = statTests.testNonStationarity(endogQoQ, covariates=exogQoQ)
+aDF, granger_results = statTests.testNonStationarity(endog, covariates=exog)
 
 # %% Fit vector autoregressive (VAR) model and check out of sample performance
 varData = varM.trainTestData(endog, exog, 12)
@@ -86,3 +86,10 @@ MSE = MSE.T
 # Divide by benchmark
 MSE_comparison = MSE/MSE.loc['ARX (1)']
 MSE_weighted = MSE/abs(varMSData['test_endog'].mean(axis=0))
+
+
+# %% Reverse transformation
+endog_train = endog[:-12]
+for key in results.keys():
+    forecastsQoQ = results[key]['forecastsQoQ']
+    results[key]['forecasts'] = importData.reverseTransformedData(endog_train, forecastsQoQ, "diff4")
