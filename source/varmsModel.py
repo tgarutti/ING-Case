@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from copy import deepcopy
 import matplotlib.pyplot as plt
+import source.plots as plots
 
 # %% Vector autoregressive model
 def varMSModel(varMSData, ar, ma, X, hyperparams):
@@ -31,21 +32,20 @@ def varMSModel(varMSData, ar, ma, X, hyperparams):
     residuals = deepcopy(train_endog)
     forecasts[:] = 0
     residuals[:] = 0
-    
+    smoothed_probabilites = pd.DataFrame()
     for col in train_endog.columns:
         endog = train_endog[col]
         exog = train_exog
         mod, modelFit = varMSModelFit(endog, ar, ma, exog, hyperparams)
-        smoothedP0 = modelFit.smoothed_marginal_probabilities[1]
-        plt.figure()
-        smoothedP0.plot()
+        smoothedP = modelFit.smoothed_marginal_probabilities[1]
+        smoothed_probabilites = pd.concat([smoothed_probabilites, smoothedP], axis=1)
         forecasts[col] = varMSModelForecast(modelFit, ar, 2, test_exog, full_endog[col], hyperparams)
         residuals[col] = endog-modelFit.predict()
         
     # mod, modelFit = varMSModelFit(train_endog, ar, ma, train_exog)
     # forecasts = varMSModelForecast(modelFit, n_forecasts, test_exog, startDate)
     # residuals = modelFit.resid
-    
+    plots.plotSmoothedProbabilities(smoothed_probabilites)
     estimationErrors = test_endog-forecasts
     MSE = np.power(estimationErrors, 2).mean(axis=0)
     

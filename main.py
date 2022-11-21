@@ -38,7 +38,8 @@ endog, exog, iidx = importData.matchIdx(endog, exog, lag=1)
 
 # Summary Statistics
 
-aDF, granger_results = statTests.testNonStationarity(endog, covariates=exog)
+#aDF_org, _ = statTests.testNonStationarity(delinquency, covariates=exog)
+#aDF, _ = statTests.testNonStationarity(endog, covariates=exog)
 
 # %% Fit vector autoregressive (VAR) model and check out of sample performance
 varData = varM.trainTestData(endog, exog, 12)
@@ -75,17 +76,17 @@ empty = pd.DataFrame()
 results['ARXMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 1, hyperparams= varmsHP)
 
 # %% Create MSE matrix
-MSE = pd.DataFrame()
+MSE_QoQ = pd.DataFrame()
 colnames = []
 for key in results.keys():
-    MSE = pd.concat([MSE,(results[key])['MSE']],axis=1)
+    MSE_QoQ = pd.concat([MSE_QoQ,(results[key])['MSE']],axis=1)
     colnames.append(key)
-MSE.columns = colnames
-MSE = MSE.T
+MSE_QoQ.columns = colnames
+MSE_QoQ = MSE_QoQ.T
 
 # Divide by benchmark
-MSE_comparison = MSE/MSE.loc['ARX (1)']
-MSE_weighted = MSE/abs(varMSData['test_endog'].mean(axis=0))
+MSE_QoQ_comparison = MSE_QoQ/MSE_QoQ.loc['ARX (1)']
+MSE_QoQ_weighted = MSE_QoQ/abs(varMSData['test_endog'].mean(axis=0))
 
 
 # %% Reverse transformation
@@ -96,3 +97,20 @@ for key in results.keys():
     results[key]['FullSampleResults'] = pd.concat([delinquency.loc[endog_train.index], results[key]['forecasts']])
     plots.plotForecasts(results[key]['FullSampleResults'], 12, key)
     
+# %% Create MSE matrix
+test_del = delinquency.loc[endog[-12:].index]
+MSE = pd.DataFrame()
+colnames = []
+for key in results.keys():
+    mse = np.power((test_del - results[key]['forecasts']),2).mean(axis=0)
+    MSE = pd.concat([MSE,mse],axis=1)
+    colnames.append(key)
+MSE.columns = colnames
+MSE = MSE.T
+
+# Divide by benchmark
+MSE_comparison = MSE/MSE.loc['ARX (1)']
+MSE_weighted = MSE/abs(varMSData['test_endog'].mean(axis=0))
+
+# %% Perform scenario forecast
+

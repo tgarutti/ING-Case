@@ -124,3 +124,5 @@ def matchIdx(endog, exog, lag=1):
     iidx = idx_endog.intersection(idx_exog)
     return endog.loc[iidx], exog.loc[iidx], iidx
        
+def getScenarioData(endog, exog, scenario):
+    zeros = scenario*0

@@ -32,24 +32,44 @@ def plotQoQDelinquencyRates(delinquency_QoQ):
     
     
 def plotForecasts(delinquency, n_forecasts, model_name):
-    plt.figure()
-    train_del = delinquency[:-n_forecasts]
+    fig, ax = plt.subplots()
+    
+    train_del = delinquency[-(n_forecasts+20):-n_forecasts+1]
     forecasts = delinquency[-n_forecasts:]
-    my_colors = list(islice(cycle(['b','y','g','r','m']), None, len(train_del)))
-    plt.plot(train_del, linestyle= '-', color = my_colors)
-    plt.plot(forecasts, linestyle= '--', color = my_colors)
-
-    for i, col in enumerate(train_del.columns):
-        plt.plot(train_del[col], "-", colors[i])
-        plt.plot(forecasts[col], "--", colors[i])
     
-    plt.ylabel('delinquency rate')
-    plt.legend(['All real estate', 'All customer', 'Leases', 'C&I', 'Agricultural'])
+    # Get default colors
+    prop_cycle = plt.rcParams['axes.prop_cycle']
+    my_colors = prop_cycle.by_key()['color']
+    
+    train_del.plot(ax=ax, linestyle= '-', color = my_colors)
+    forecasts.plot(ax=ax, linestyle= '--', color = my_colors, legend=False)
+    ax.set_title(model_name)
+    
+def plotSmoothedProbabilities(smoothedP):
+    endog_names = ['All real estate', 'All customer', 'Leases', 'C&I', 'Agricultural']
+    fig, axs = plt.subplots(len(endog_names), figsize=(30,20))
+    usrec = DataReader('USREC', 'fred', start=datetime(1987, 1, 1), end=datetime(2022, 4, 1))
+    
+    axs = axs.ravel()
+
+    
+    for i, col in enumerate(smoothedP.columns):
+        row = smoothedP[col]
+        axs[i].plot(row)
+        axs[i].title.set_text("Smoothed Probabilities of Recession State (" + endog_names[i] + ")")
+        axs[i].fill_between(usrec.index, -1, 1, where=usrec['USREC'].values, color='k', alpha=0.1)
+        axs[i].set_ylim([0,1])
+        axs[i].set_xlim([row.index[0],row.index[-1]])
+    
+    plt.figure()
+    plt.plot(smoothedP)
+    plt.ylabel('QoQ delinquency rate')
     
 
-    #usrec = DataReader('USREC', 'fred', start=datetime(1987, 1, 1), end=datetime(2022, 4, 1))
-    #plt.fill_between(usrec.index, 0, 1, where=usrec['USREC'].values, color='k', alpha=0.1)
-    plt.ylim([0,0.12])
+    usrec = DataReader('USREC', 'fred', start=datetime(1987, 1, 1), end=datetime(2022, 4, 1))
+    #plt.title('Delinquency Rates (NSA) from 1987 to 2022 for all commercial banks')
+    plt.fill_between(usrec.index, -1, 1, where=usrec['USREC'].values, color='k', alpha=0.1)
+    plt.ylim([-0.04,0.05])
 
 
 def plotAllData(data):
