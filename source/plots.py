@@ -54,7 +54,6 @@ def plotSmoothedProbabilities(smoothedP):
     
     axs = axs.ravel()
 
-    
     for i, col in enumerate(smoothedP.columns):
         row = smoothedP[col]
         axs[i].plot(row)

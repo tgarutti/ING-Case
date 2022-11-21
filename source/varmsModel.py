@@ -30,8 +30,10 @@ def varMSModel(varMSData, ar, ma, X, hyperparams):
     
     forecasts = deepcopy(test_endog)
     residuals = deepcopy(train_endog)
+    ape = deepcopy(train_endog)
     forecasts[:] = 0
     residuals[:] = 0
+    ape[:] = 0
     smoothed_probabilites = pd.DataFrame()
     for col in train_endog.columns:
         endog = train_endog[col]
@@ -40,7 +42,8 @@ def varMSModel(varMSData, ar, ma, X, hyperparams):
         smoothedP = modelFit.smoothed_marginal_probabilities[1]
         smoothed_probabilites = pd.concat([smoothed_probabilites, smoothedP], axis=1)
         forecasts[col] = varMSModelForecast(modelFit, ar, 2, test_exog, full_endog[col], hyperparams)
-        residuals[col] = abs(endog-modelFit.predict())
+        residuals[col] = endog-modelFit.predict()
+        ape[col] = (endog-modelFit.predict())/endog
         
 
     smoothed_probabilites.columns = train_endog.columns
@@ -53,6 +56,7 @@ def varMSModel(varMSData, ar, ma, X, hyperparams):
     results['estimationErrors'] = estimationErrors
     results['residuals'] = residuals
     results['MSE'] = MSE
+    results['APE'] = ape
     
     return results
 
