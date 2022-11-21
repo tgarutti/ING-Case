@@ -41,6 +41,7 @@ def plotForecasts(delinquency, n_forecasts, model_name):
     prop_cycle = plt.rcParams['axes.prop_cycle']
     my_colors = prop_cycle.by_key()['color']
     
+    train_del.columns = ['All real estate', 'All customer', 'Leases', 'C&I', 'Agricultural']
     train_del.plot(ax=ax, linestyle= '-', color = my_colors)
     forecasts.plot(ax=ax, linestyle= '--', color = my_colors, legend=False)
     ax.set_title(model_name)
