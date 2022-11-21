@@ -128,6 +128,7 @@ def getScenarioData(endog, exog, scenario):
     train_endog = endog
     train_exog = exog
     test_endog = scenario*0
+    test_endog.columns = train_endog.columns
     test_exog = scenario
     
     data = {}

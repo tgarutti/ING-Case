@@ -73,7 +73,7 @@ varmsHP['trend_switch'] = False
 empty = pd.DataFrame()
 #results['ARMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 0, hyperparams= varmsHP)
 
-results['ARXMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 1, hyperparams= varmsHP)
+#results['ARXMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 1, hyperparams= varmsHP)
 
 # %% Create MSE matrix
 MSE_QoQ = pd.DataFrame()
@@ -113,7 +113,8 @@ MSE_comparison = MSE/MSE.loc['ARX (1)']
 MSE_weighted = MSE/abs(varMSData['test_endog'].mean(axis=0))
 
 # %% Perform scenario forecast
-
+scenarios.columns = historical.columns[5:]
 data_scenario = importData.getScenarioData(endog, exog, scenarios)
 
 results_scenario = varmsM.varMSModel(data_scenario, 1, 0, X = 1, hyperparams= varmsHP)
+forecastsMS = importData.reverseTransformedData(delinquency.loc[endog.index], results_scenario['forecastsQoQ'], "diff4")
