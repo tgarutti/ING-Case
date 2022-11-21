@@ -73,7 +73,7 @@ varmsHP['trend_switch'] = False
 empty = pd.DataFrame()
 #results['ARMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 0, hyperparams= varmsHP)
 
-#results['ARXMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 1, hyperparams= varmsHP)
+results['ARXMS (1)'] = varmsM.varMSModel(varMSData, 1, 0, X = 1, hyperparams= varmsHP)
 
 # %% Create MSE matrix
 MSE_QoQ = pd.DataFrame()

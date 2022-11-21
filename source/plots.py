@@ -62,16 +62,6 @@ def plotSmoothedProbabilities(smoothedP):
         axs[i].fill_between(usrec.index, -1, 1, where=usrec['USREC'].values, color='k', alpha=0.1)
         axs[i].set_ylim([0,1])
         axs[i].set_xlim([row.index[0],row.index[-1]])
-    
-    plt.figure()
-    plt.plot(smoothedP)
-    plt.ylabel('QoQ delinquency rate')
-    
-
-    usrec = DataReader('USREC', 'fred', start=datetime(1987, 1, 1), end=datetime(2022, 4, 1))
-    #plt.title('Delinquency Rates (NSA) from 1987 to 2022 for all commercial banks')
-    plt.fill_between(usrec.index, -1, 1, where=usrec['USREC'].values, color='k', alpha=0.1)
-    plt.ylim([-0.04,0.05])
 
 
 def plotAllData(data):

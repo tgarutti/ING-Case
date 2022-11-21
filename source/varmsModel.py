@@ -40,11 +40,10 @@ def varMSModel(varMSData, ar, ma, X, hyperparams):
         smoothedP = modelFit.smoothed_marginal_probabilities[1]
         smoothed_probabilites = pd.concat([smoothed_probabilites, smoothedP], axis=1)
         forecasts[col] = varMSModelForecast(modelFit, ar, 2, test_exog, full_endog[col], hyperparams)
-        residuals[col] = endog-modelFit.predict()
+        residuals[col] = abs(endog-modelFit.predict())
         
-    # mod, modelFit = varMSModelFit(train_endog, ar, ma, train_exog)
-    # forecasts = varMSModelForecast(modelFit, n_forecasts, test_exog, startDate)
-    # residuals = modelFit.resid
+
+    smoothed_probabilites.columns = train_endog.columns
     plots.plotSmoothedProbabilities(smoothed_probabilites)
     estimationErrors = test_endog-forecasts
     MSE = np.power(estimationErrors, 2).mean(axis=0)
