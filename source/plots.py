@@ -34,7 +34,7 @@ def plotQoQDelinquencyRates(delinquency_QoQ):
 def plotForecasts(delinquency, n_forecasts, model_name):
     fig, ax = plt.subplots()
     
-    train_del = delinquency[-(n_forecasts+20):-n_forecasts+1]
+    train_del = delinquency[-(n_forecasts+13):-n_forecasts+1]
     forecasts = delinquency[-n_forecasts:]
     
     # Get default colors
@@ -44,6 +44,8 @@ def plotForecasts(delinquency, n_forecasts, model_name):
     train_del.plot(ax=ax, linestyle= '-', color = my_colors)
     forecasts.plot(ax=ax, linestyle= '--', color = my_colors, legend=False)
     ax.set_title(model_name)
+    ax.set_ylim(0,0.04)
+    ax.set_xlim()
     
 def plotSmoothedProbabilities(smoothedP):
     endog_names = ['All real estate', 'All customer', 'Leases', 'C&I', 'Agricultural']

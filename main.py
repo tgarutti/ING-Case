@@ -118,3 +118,6 @@ data_scenario = importData.getScenarioData(endog, exog, scenarios)
 
 results_scenario = varmsM.varMSModel(data_scenario, 1, 0, X = 1, hyperparams= varmsHP)
 forecastsMS = importData.reverseTransformedData(delinquency.loc[endog.index], results_scenario['forecastsQoQ'], "diff4")
+plots.plotForecasts(pd.concat([delinquency.loc[endog.index],forecastsMS]), 7, "Forecasted Delinquencies (MS(X) model)")
+
+residsMS = results_scenario['residuals'].dropna().std(axis=0)
