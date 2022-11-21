@@ -114,3 +114,6 @@ MSE_weighted = MSE/abs(varMSData['test_endog'].mean(axis=0))
 
 # %% Perform scenario forecast
 
+data_scenario = importData.getScenarioData(endog, exog, scenarios)
+
+results_scenario = varmsM.varMSModel(data_scenario, 1, 0, X = 1, hyperparams= varmsHP)

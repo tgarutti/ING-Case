@@ -125,4 +125,17 @@ def matchIdx(endog, exog, lag=1):
     return endog.loc[iidx], exog.loc[iidx], iidx
        
 def getScenarioData(endog, exog, scenario):
-    zeros = scenario*0
+    train_endog = endog
+    train_exog = exog
+    test_endog = scenario*0
+    test_exog = scenario
+    
+    data = {}
+    
+    data["test_endog"] = test_endog
+    data["train_endog"] = train_endog
+    
+    data["test_exog"] = test_exog
+    data["train_exog"] = train_exog
+    
+    return data
