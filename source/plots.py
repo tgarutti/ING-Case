@@ -60,7 +60,7 @@ def plotSmoothedProbabilities(smoothedP):
         axs[i].plot(row)
         axs[i].title.set_text("Smoothed Probabilities of Recession State (" + endog_names[i] + ")")
         axs[i].fill_between(usrec.index, -1, 1, where=usrec['USREC'].values, color='k', alpha=0.1)
-        axs[i].set_ylim([0,1])
+        axs[i].set_ylim([-.05,1.05])
         axs[i].set_xlim([row.index[0],row.index[-1]])
 
 

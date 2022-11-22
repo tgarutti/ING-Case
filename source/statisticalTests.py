@@ -121,3 +121,14 @@ def regression(data):
     results = model.fit()
     results.params
     print(results.t_test([1, 0]))
+
+#%% Residuals tests
+
+def normalQQ(resid):
+    plt.rc('figure', figsize=(10,10))
+    plt.style.use('ggplot')
+    
+    probplot = sm.ProbPlot(resid, fit=True)
+    fig = probplot.qqplot(line='45', marker='o', color='black')
+    plt.title('Normal Q-Q', fontsize=20)
+    plt.show()

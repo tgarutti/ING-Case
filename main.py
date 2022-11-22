@@ -121,3 +121,6 @@ forecastsMS = importData.reverseTransformedData(delinquency.loc[endog.index], re
 plots.plotForecasts(pd.concat([delinquency.loc[endog.index],forecastsMS]), 7, "Forecasted Delinquencies (MS(X) model)")
 
 residsMS = abs(results_scenario['residuals'].dropna()).mean(axis=0)
+residuals_corr = results_scenario['residuals'].dropna()
+for col in residuals_corr.columns:
+    statTests.normalQQ(residuals_corr[col])

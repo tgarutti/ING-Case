@@ -34,7 +34,10 @@ def varMSModel(varMSData, ar, ma, X, hyperparams):
     forecasts[:] = 0
     residuals[:] = 0
     ape[:] = 0
+    
+    params = pd.DataFrame()
     smoothed_probabilites = pd.DataFrame()
+    
     for col in train_endog.columns:
         endog = train_endog[col]
         exog = train_exog
@@ -44,7 +47,9 @@ def varMSModel(varMSData, ar, ma, X, hyperparams):
         forecasts[col] = varMSModelForecast(modelFit, ar, 2, test_exog, full_endog[col], hyperparams)
         residuals[col] = endog-modelFit.predict()
         ape[col] = (endog-modelFit.predict())/endog
+        params = pd.concat([params, modelFit.params], axis=1)
         
+    params.columns = train_endog.columns
 
     smoothed_probabilites.columns = train_endog.columns
     plots.plotSmoothedProbabilities(smoothed_probabilites)
@@ -57,6 +62,8 @@ def varMSModel(varMSData, ar, ma, X, hyperparams):
     results['residuals'] = residuals
     results['MSE'] = MSE
     results['APE'] = ape
+    results['params'] = params
+    
     
     return results
 
